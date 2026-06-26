@@ -28,8 +28,13 @@ export class ClaudeExtractor implements PdfExtractor {
   async extract(pdfText: string): Promise<RawOperation[]> {
     // Структурированный вывод через tool-use: единственная Zod-схема — источник истины и
     // для контракта инструмента (JSON-schema), и для рантайм-валидации ответа ниже.
-    // target: 'openApi3' — Anthropic ожидает JSON-schema в OpenAPI-совместимом диалекте.
-    const inputSchema = zodToJsonSchema(ExtractionResult, { target: 'openApi3' })
+    // Anthropic валидирует input_schema по JSON Schema draft 2020-12; дефолтный target
+    // zod-to-json-schema совместим (nullable → anyOf [..., null]), а openApi3 выдавал бы
+    // невалидный в 2020-12 `nullable: true`. $refStrategy:'none' инлайнит схему без $ref/$defs,
+    // а $schema выкидываем — лишний ключ в input_schema не нужен.
+    const { $schema: _drop, ...inputSchema } = zodToJsonSchema(ExtractionResult, {
+      $refStrategy: 'none',
+    })
 
     const response = await this.client.messages.create({
       model: this.model,
