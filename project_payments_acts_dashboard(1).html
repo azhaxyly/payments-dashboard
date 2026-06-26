@@ -1,0 +1,996 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Дашборд оплат по проектам и актам</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #6d7587;
+      --line: #e3e8f2;
+      --soft: #f0f4fa;
+      --accent: #2563eb;
+      --accent-2: #0f766e;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --ok: #15803d;
+      --radius: 18px;
+      --shadow: 0 16px 35px rgba(20, 31, 56, .08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top left, #e9f0ff 0, #f5f7fb 380px, #f5f7fb 100%);
+      color: var(--text);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      line-height: 1.45;
+    }
+    .wrap { max-width: 1480px; margin: 0 auto; padding: 28px; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 22px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+    h1 { margin: 0 0 8px; font-size: 34px; line-height: 1.12; letter-spacing: -.04em; }
+    .lead { max-width: 920px; margin: 0; color: var(--muted); font-size: 15px; }
+    .hero-note {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 18px;
+      min-width: 320px;
+    }
+    .hero-note b { display:block; font-size: 13px; margin-bottom: 6px; }
+    .hero-note span { color: var(--muted); font-size: 13px; }
+    .toolbar, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .cards { display: grid; grid-template-columns: repeat(6, minmax(160px, 1fr)); gap: 14px; margin: 18px 0; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+    .card .label { color: var(--muted); font-size: 12px; margin-bottom: 7px; }
+    .card .value { font-size: 24px; font-weight: 800; letter-spacing: -.035em; white-space: nowrap; }
+    .card .hint { color: var(--muted); font-size: 12px; margin-top: 5px; }
+    .toolbar { padding: 16px; margin-bottom: 18px; }
+    .filters { display: grid; grid-template-columns: 2fr 1.4fr 1.25fr 1fr 1fr 1fr 1fr; gap: 12px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 11px;
+      font: inherit;
+      color: var(--text);
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #93b4ff; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font: inherit;
+      color: var(--text);
+      transition: .15s ease;
+    }
+    button:hover { transform: translateY(-1px); border-color: #b8c5dc; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.good { background: #ecfdf5; border-color: #bbf7d0; color: #166534; }
+    button.warn { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+    button.danger { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+    .grid { display: grid; grid-template-columns: 390px minmax(0, 1fr); gap: 18px; align-items: start; }
+    .panel { overflow: hidden; }
+    .panel-head { padding: 17px 18px; border-bottom: 1px solid var(--line); display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .panel-head h2 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
+    .panel-body { padding: 16px 18px; }
+    .project-list { display: grid; gap: 10px; max-height: 820px; overflow: auto; padding-right: 4px; }
+    .project-card { border: 1px solid var(--line); background: #fff; border-radius: 15px; padding: 13px; cursor: pointer; }
+    .project-card:hover { border-color: #aac0eb; background: #fbfdff; }
+    .project-card.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.10); }
+    .project-card .top { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .project-card .name { font-weight: 800; font-size: 14px; }
+    .project-card .sum { font-weight: 800; white-space: nowrap; }
+    .project-card .meta { margin-top: 6px; color: var(--muted); font-size: 12px; }
+    .progress { margin-top: 10px; height: 8px; border-radius: 99px; overflow: hidden; background: var(--soft); }
+    .progress > i { display:block; height:100%; width:0; background: linear-gradient(90deg, #22c55e, #0f766e); }
+    .tabs { display:flex; gap:8px; padding: 0 18px 14px; border-bottom: 1px solid var(--line); }
+    .tab { padding: 8px 12px; border-radius: 999px; background: var(--soft); border: 1px solid transparent; }
+    .tab.active { background: #eef4ff; color: var(--accent); border-color: #c9dafe; }
+    .table-wrap { overflow:auto; max-height: 720px; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 11px 10px; vertical-align: top; text-align:left; }
+    th { position: sticky; top: 0; z-index: 2; background: #f8fafc; color: #3b4456; font-size: 12px; font-weight: 800; }
+    tbody tr:hover { background: #fbfdff; }
+    .money { white-space: nowrap; font-weight: 800; text-align: right; }
+    .muted { color: var(--muted); }
+    .small { font-size: 12px; }
+    .stage { display:inline-flex; align-items:center; gap:6px; padding: 4px 8px; border-radius: 999px; background:#eef4ff; color:#1d4ed8; font-weight:700; font-size:12px; white-space:nowrap; }
+    .status { display:inline-flex; align-items:center; gap:6px; padding: 5px 8px; border-radius: 999px; font-weight: 800; font-size: 12px; white-space:nowrap; }
+    .status.open { background:#fff7ed; color:#9a3412; }
+    .status.wait { background:#eff6ff; color:#1d4ed8; }
+    .status.done { background:#ecfdf5; color:#166534; }
+    .checkcell { min-width: 96px; text-align:center; }
+    .checkcell input { width: 18px; height: 18px; cursor:pointer; accent-color: var(--accent-2); }
+    .comment { min-width: 190px; }
+    .comment input { padding: 8px; min-width: 170px; }
+    .summary-text { margin: 18px 0 0; padding: 17px 18px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); color: var(--muted); }
+    .summary-text b { color: var(--text); }
+    .hidden { display:none; }
+    @media (max-width: 1200px) {
+      .hero, .grid { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: repeat(3, 1fr); }
+      .filters { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 720px) {
+      .wrap { padding: 16px; }
+      h1 { font-size: 25px; }
+      .cards { grid-template-columns: 1fr; }
+      .filters { grid-template-columns: 1fr; }
+      .hero-note { min-width: 0; }
+    }
+    @media print {
+      body { background:#fff; }
+      .toolbar, .actions, .tabs, .project-list { display:none !important; }
+      .wrap { max-width:none; padding:0; }
+      .grid { display:block; }
+      .panel { box-shadow:none; border:0; }
+      th { position: static; }
+      .table-wrap { max-height:none; overflow:visible; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <h1>Дашборд оплат по проектам и актам</h1>
+        <p class="lead">Сводка собрана по поступлениям из банковской выписки. В таблицу включены только проектные оплаты от клиентов; депозитные операции, проценты, налоги, зарплаты, аренда и комиссии исключены. Колонки по актам заполняются вручную и сохраняются в браузере.</p>
+      </div>
+      <aside class="hero-note">
+        <b>Период выписки: 16.07.2026 - 09.08.2026</b>
+        <span>Источник: обработанный PDF. Оплаты считаются подтвержденными поступлением денег на счет.</span>
+      </aside>
+    </section>
+
+    <section class="cards" id="summaryCards"></section>
+
+    <section class="toolbar">
+      <div class="filters">
+        <div><label>Поиск</label><input id="q" type="search" placeholder="Проект, ИНН, этап, счет, назначение..." /></div>
+        <div><label>Проект / юрлицо</label><select id="projectFilter"><option value="">Все проекты</option></select></div>
+        <div><label>Этап</label><select id="stageFilter"><option value="">Все этапы</option></select></div>
+        <div><label>Дата с</label><input id="dateFrom" type="date" /></div>
+        <div><label>Дата по</label><input id="dateTo" type="date" /></div>
+        <div><label>Акт отправлен</label><select id="sentFilter"><option value="">Все</option><option value="yes">Да</option><option value="no">Нет</option></select></div>
+        <div><label>Акт подписан</label><select id="signedFilter"><option value="">Все</option><option value="yes">Да</option><option value="no">Нет</option></select></div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="clearFilters">Сбросить фильтры</button>
+        <button class="good" id="markVisibleSent">Отметить видимые акты отправленными</button>
+        <button class="good" id="markVisibleSigned">Отметить видимые акты подписанными</button>
+        <button id="exportCsv">Экспорт CSV</button>
+        <button id="printBtn">Печать</button>
+        <button class="danger" id="resetActs">Сбросить статусы актов</button>
+      </div>
+    </section>
+
+    <section class="grid">
+      <aside class="panel">
+        <div class="panel-head"><h2>Проекты / юрлица</h2><span class="muted small" id="projectCounter"></span></div>
+        <div class="panel-body"><div class="project-list" id="projectCards"></div></div>
+      </aside>
+
+      <main class="panel">
+        <div class="panel-head"><h2>Оплаты и закрывающие документы</h2><span class="muted small" id="tableCounter"></span></div>
+        <div class="tabs">
+          <button class="tab active" data-tab="payments">Оплаты</button>
+          <button class="tab" data-tab="projects">Сводка по юрлицам</button>
+        </div>
+
+        <div class="table-wrap" id="paymentsView">
+          <table>
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Проект / юрлицо</th>
+                <th>ИНН / ОГРН</th>
+                <th>Этап</th>
+                <th>Счет / док.</th>
+                <th class="money">Сумма</th>
+                <th>Оплачено</th>
+                <th class="checkcell">Акт отправлен</th>
+                <th class="checkcell">Акт подписан</th>
+                <th>Статус</th>
+                <th class="comment">Комментарий</th>
+              </tr>
+            </thead>
+            <tbody id="paymentsRows"></tbody>
+          </table>
+        </div>
+
+        <div class="table-wrap hidden" id="projectsView">
+          <table>
+            <thead>
+              <tr>
+                <th>Проект / юрлицо</th>
+                <th>ИНН</th>
+                <th>ОГРН / ОГРНИП</th>
+                <th>Оплат</th>
+                <th class="money">Получено</th>
+                <th class="money">Акты отправлены</th>
+                <th class="money">Акты подписаны</th>
+                <th>Закрытие</th>
+              </tr>
+            </thead>
+            <tbody id="projectRows"></tbody>
+          </table>
+        </div>
+      </main>
+    </section>
+
+    <section class="summary-text" id="finalSummary"></section>
+  </div>
+
+  <script>
+    const payments = [
+  {
+    "id": "p005",
+    "date": "2026-07-16",
+    "dateRu": "16.07.2026",
+    "project": "ООО \"ЛЕДНИК-СТАРТ\"",
+    "legalType": "ООО",
+    "inn": "5408124976",
+    "ogrn": "ОГРН 1235400078124",
+    "account": "40702810504010067142",
+    "bank": "БИК 044525769 ООО \"Речбанк\"",
+    "amount": 33000.0,
+    "amountFormatted": "33 000,00",
+    "doc": "9142",
+    "invoice": "сч. № 742 от 09.07.2026",
+    "stage": "Сопровождение сайта",
+    "period": "",
+    "description": "Оплата за техническое сопровождение сайта по сч. № 742 от 09.07.2026 г. Без налога (НДС).",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p006",
+    "date": "2026-07-16",
+    "dateRu": "16.07.2026",
+    "project": "ООО \"ОРБИТА-ПРОМО\"",
+    "legalType": "ООО",
+    "inn": "7706412805",
+    "ogrn": "ОГРН 1247700642185",
+    "account": "40702810123040048291",
+    "bank": "БИК 044030914 АО \"Фин-Мост Банк\"",
+    "amount": 36400.0,
+    "amountFormatted": "36 400,00",
+    "doc": "2387",
+    "invoice": "счету № 746 от 10.07.2026",
+    "stage": "Контекстная реклама",
+    "period": "13.07 по 12.08",
+    "description": "Оплата по счету № 746 от 10.07.2026 г. за настройку и сопровождение Директа с 13.07 по 12.08. НДС не облагается.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p008",
+    "date": "2026-07-17",
+    "dateRu": "17.07.2026",
+    "project": "ООО \"ВЕКТОР-ТУР\"",
+    "legalType": "ООО",
+    "inn": "7813492063",
+    "ogrn": "ОГРН 1237800146287",
+    "account": "40702810777020091456",
+    "bank": "БИК 044030914 АО \"Фин-Мост Банк\"",
+    "amount": 8190.0,
+    "amountFormatted": "8 190,00",
+    "doc": "3186",
+    "invoice": "счету № 751 от 16 июля 2026 г",
+    "stage": "Контент сайта",
+    "period": "",
+    "description": "Оплата по счету № 751 от 16 июля 2026 г. за публикацию новых материалов на сайте. НДС не облагается.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p009",
+    "date": "2026-07-17",
+    "dateRu": "17.07.2026",
+    "project": "ООО \"СИГМА-МАРКЕТ\"",
+    "legalType": "ООО",
+    "inn": "7725136498",
+    "ogrn": "ОГРН 1247700293154",
+    "account": "40702810888060027194",
+    "bank": "БИК 044525769 ООО \"Речбанк\"",
+    "amount": 54400.0,
+    "amountFormatted": "54 400,00",
+    "doc": "642",
+    "invoice": "счету № 733 от 14.07.2026",
+    "stage": "Размещение объявлений",
+    "period": "",
+    "description": "Размещение объявлений на сервисе \"Объявления\" (этап 1) по счету № 733 от 14.07.2026 г. НДС не облагается.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p010",
+    "date": "2026-07-17",
+    "dateRu": "17.07.2026",
+    "project": "ООО \"СИГМА-МАРКЕТ\"",
+    "legalType": "ООО",
+    "inn": "7725136498",
+    "ogrn": "ОГРН 1247700293154",
+    "account": "40702810888060027194",
+    "bank": "БИК 044525769 ООО \"Речбанк\"",
+    "amount": 56300.0,
+    "amountFormatted": "56 300,00",
+    "doc": "643",
+    "invoice": "счету № 734 от 14.07.2026",
+    "stage": "Контекстная реклама",
+    "period": "",
+    "description": "Настройка и ведение кампании контекстной рекламы (этап 1) по счету № 734 от 14.07.2026 г. НДС не облагается.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p012",
+    "date": "2026-07-18",
+    "dateRu": "18.07.2026",
+    "project": "ООО \"ОБЛАКО-ИМИДЖ\"",
+    "legalType": "ООО",
+    "inn": "5031198742",
+    "ogrn": "ОГРН 1235000198741",
+    "account": "40702810444010086137",
+    "bank": "БИК 044030812 ФИЛИАЛ \"СЕВЕРНЫЙ\" АО \"НАВИГАТОР БАНК\"",
+    "amount": 19800.0,
+    "amountFormatted": "19 800,00",
+    "doc": "1108",
+    "invoice": "сч. № 728 от 15.07.2026",
+    "stage": "SERM",
+    "period": "15.07.2026-14.08.2026",
+    "description": "Оплата по сч. № 728 от 15.07.2026, аванс по договору № 214 от 18.11.2025, услуги SERM 15.07.2026-14.08.2026. Без НДС.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p013",
+    "date": "2026-07-18",
+    "dateRu": "18.07.2026",
+    "project": "ООО \"ОБЛАКО-ИМИДЖ\"",
+    "legalType": "ООО",
+    "inn": "5031198742",
+    "ogrn": "ОГРН 1235000198741",
+    "account": "40702810444010086137",
+    "bank": "БИК 044030812 ФИЛИАЛ \"СЕВЕРНЫЙ\" АО \"НАВИГАТОР БАНК\"",
+    "amount": 47000.0,
+    "amountFormatted": "47 000,00",
+    "doc": "1109",
+    "invoice": "сч. № 729 от 15.07.2026",
+    "stage": "Контекстная реклама",
+    "period": "",
+    "description": "Оплата по сч. № 729 от 15.07.2026, аванс по договору № 286 от 04.02.2026, ведение контекстной рекламы. Без НДС.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p014",
+    "date": "2026-07-18",
+    "dateRu": "18.07.2026",
+    "project": "АНО \"СВЕТЛЫЙ КВАРТАЛ\"",
+    "legalType": "АНО",
+    "inn": "7810291634",
+    "ogrn": "ОГРН 1237800091682",
+    "account": "40703810777030064829",
+    "bank": "БИК 044030914 АО \"Фин-Мост Банк\"",
+    "amount": 77200.0,
+    "amountFormatted": "77 200,00",
+    "doc": "845",
+    "invoice": "счету № 763 от 17.07.2026",
+    "stage": "SEO-продвижение",
+    "period": "",
+    "description": "Оплата по счету № 763 от 17.07.2026 за SEO-оптимизацию и продвижение сайта 08.2026. НДС не облагается.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p015",
+    "date": "2026-07-18",
+    "dateRu": "18.07.2026",
+    "project": "ООО \"ВЕРТИКАЛЬ МОДУЛЬ\"",
+    "legalType": "ООО",
+    "inn": "7720195384",
+    "ogrn": "ОГРН 1247700119538",
+    "account": "40702810666070038452",
+    "bank": "БИК 044030914 АО \"Фин-Мост Банк\"",
+    "amount": 82400.0,
+    "amountFormatted": "82 400,00",
+    "doc": "439",
+    "invoice": "счету № 765 от 17.07.2026",
+    "stage": "Дизайн",
+    "period": "",
+    "description": "Оплата по счету № 765 от 17.07.2026, финальный платеж за этап дизайна по договору № 95 от 22.02.2026. НДС не облагается.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p020",
+    "date": "2026-07-19",
+    "dateRu": "19.07.2026",
+    "project": "ООО \"ЛАЙНЕР-АВТО\"",
+    "legalType": "ООО",
+    "inn": "5409207165",
+    "ogrn": "ОГРН 1245400046721",
+    "account": "40702810333080015267",
+    "bank": "БИК 044030914 АО \"Фин-Мост Банк\"",
+    "amount": 18200.0,
+    "amountFormatted": "18 200,00",
+    "doc": "906",
+    "invoice": "счету № 768 от 18 июля 2026 г",
+    "stage": "Оплата по проекту",
+    "period": "",
+    "description": "Оплата по счету № 768 от 18 июля 2026 г. НДС не облагается.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p024",
+    "date": "2026-07-22",
+    "dateRu": "22.07.2026",
+    "project": "ООО \"ИНЖЕНЕРНЫЙ КОНТУР\"",
+    "legalType": "ООО",
+    "inn": "6679083142",
+    "ogrn": "ОГРН 1246600031914",
+    "account": "40702810222050068193",
+    "bank": "БИК 044525743 АО \"Банк Горизонт\"",
+    "amount": 45000.0,
+    "amountFormatted": "45 000,00",
+    "doc": "214",
+    "invoice": "Счет на оплату № 739 от 09 июля 2026 г",
+    "stage": "Оплата по проекту",
+    "period": "",
+    "description": "Счет на оплату № 739 от 09 июля 2026 г. Без налога (НДС).",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p025",
+    "date": "2026-07-22",
+    "dateRu": "22.07.2026",
+    "project": "ИП КОСАРЕВА ДАРЬЯ АНДРЕЕВНА",
+    "legalType": "ИП",
+    "inn": "500914637205",
+    "ogrn": "ОГРНИП 326500018467102",
+    "account": "40802810988007032164",
+    "bank": "БИК 044030812 ФИЛИАЛ \"СЕВЕРНЫЙ\" АО \"НАВИГАТОР БАНК\"",
+    "amount": 64800.0,
+    "amountFormatted": "64 800,00",
+    "doc": "476",
+    "invoice": "счету № 741 от 09.07.2026",
+    "stage": "SMM",
+    "period": "",
+    "description": "Оплата по счету № 741 от 09.07.2026 г. за SMM-сопровождение проекта. Сумма 64800-00. Без налога (НДС).",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p026",
+    "date": "2026-07-22",
+    "dateRu": "22.07.2026",
+    "project": "ООО \"СТАЛЬСНАБ-РЕСУРС\"",
+    "legalType": "ООО",
+    "inn": "5047192865",
+    "ogrn": "ОГРН 1245000192865",
+    "account": "40702810666040097231",
+    "bank": "БИК 044030812 ФИЛИАЛ \"СЕВЕРНЫЙ\" АО \"НАВИГАТОР БАНК\"",
+    "amount": 107500.0,
+    "amountFormatted": "107 500,00",
+    "doc": "3058",
+    "invoice": "счету № 731 от 08.07.2026",
+    "stage": "Маркетинговые услуги",
+    "period": "",
+    "description": "Оплата по счету № 731 от 08.07.2026, договор услуг № 318 от 27.04.2025 за маркетинговые услуги. Сумма 107500-00. Без НДС.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p029",
+    "date": "2026-07-23",
+    "dateRu": "23.07.2026",
+    "project": "ООО \"ОРБИТА-ПРОМО\"",
+    "legalType": "ООО",
+    "inn": "7706412805",
+    "ogrn": "ОГРН 1247700642185",
+    "account": "40702810123040048291",
+    "bank": "БИК 044030914 АО \"Фин-Мост Банк\"",
+    "amount": 27600.0,
+    "amountFormatted": "27 600,00",
+    "doc": "2406",
+    "invoice": "счету № 752 от 16.07.2026",
+    "stage": "Копирайтинг / тексты",
+    "period": "",
+    "description": "Оплата по счету № 752 от 16.07.2026 г. за подготовку коммерческих текстов. НДС не облагается.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p030",
+    "date": "2026-07-23",
+    "dateRu": "23.07.2026",
+    "project": "ООО \"ГРАНИТ-СИСТЕМ\"",
+    "legalType": "ООО",
+    "inn": "7819420657",
+    "ogrn": "ОГРН 1247800120645",
+    "account": "40702810101070024683",
+    "bank": "БИК 044030914 АО \"Фин-Мост Банк\"",
+    "amount": 60500.0,
+    "amountFormatted": "60 500,00",
+    "doc": "1812",
+    "invoice": "счету № 771 от 19.07.2026",
+    "stage": "Разработка сайта",
+    "period": "",
+    "description": "Оплата по счету № 771 от 19.07.2026 по договору № 224 от 13.09.2025 за разработку сайта. Сумма 60500-00. Без НДС.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p031",
+    "date": "2026-07-23",
+    "dateRu": "23.07.2026",
+    "project": "ИП ФЕДОТОВ РОМАН НИКОЛАЕВИЧ",
+    "legalType": "ИП",
+    "inn": "590214785306",
+    "ogrn": "ОГРНИП 326590002147853",
+    "account": "40802810551004036729",
+    "bank": "БИК 044030914 АО \"Фин-Мост Банк\"",
+    "amount": 66600.0,
+    "amountFormatted": "66 600,00",
+    "doc": "615",
+    "invoice": "Док. № 615",
+    "stage": "SEO-продвижение",
+    "period": "",
+    "description": "Оплата за услуги по SEO-продвижению сайта. НДС не облагается.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p035",
+    "date": "2026-07-25",
+    "dateRu": "25.07.2026",
+    "project": "ИП СОКОЛОВА НИНА АЛЕКСАНДРОВНА",
+    "legalType": "ИП",
+    "inn": "773019284607",
+    "ogrn": "ОГРНИП 326770019284607",
+    "account": "40802810271006091748",
+    "bank": "БИК 044525769 ООО \"Речбанк\"",
+    "amount": 32400.0,
+    "amountFormatted": "32 400,00",
+    "doc": "1205",
+    "invoice": "счету № 758 от 17 июля 2026 г",
+    "stage": "Контекстная реклама",
+    "period": "август 2026",
+    "description": "Оплата по счету № 758 от 17 июля 2026 г. Сопровождение рекламных кампаний за август 2026. НДС не облагается.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p036",
+    "date": "2026-07-25",
+    "dateRu": "25.07.2026",
+    "project": "АО \"ТЕРМИНАЛ СЕВЕРНЫЙ\"",
+    "legalType": "АО",
+    "inn": "7815082904",
+    "ogrn": "ОГРН 1237800182904",
+    "account": "40702810099010064725",
+    "bank": "БИК 044030914 АО \"Фин-Мост Банк\"",
+    "amount": 45500.0,
+    "amountFormatted": "45 500,00",
+    "doc": "3174",
+    "invoice": "сч. № 748 от 12.07.2026",
+    "stage": "Сопровождение сайта",
+    "period": "июль 2026",
+    "description": "Оплата по договору № 306 от 18.06.2026, по сч. № 748 от 12.07.2026, за сопровождение сайта за июль 2026. Без НДС.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p037",
+    "date": "2026-07-31",
+    "dateRu": "31.07.2026",
+    "project": "ООО \"ЛЕДНИК-СТАРТ\"",
+    "legalType": "ООО",
+    "inn": "5408124976",
+    "ogrn": "ОГРН 1235400078124",
+    "account": "40702810504010067142",
+    "bank": "БИК 044525769 ООО \"Речбанк\"",
+    "amount": 1830.0,
+    "amountFormatted": "1 830,00",
+    "doc": "9561",
+    "invoice": "сч. № 790 от 30.07.2026",
+    "stage": "Лицензия / сервисы",
+    "period": "",
+    "description": "Оплата за программную лицензию по сч. № 790 от 30.07.2026 г. Без НДС.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p038",
+    "date": "2026-07-31",
+    "dateRu": "31.07.2026",
+    "project": "АНО \"СВЕТЛЫЙ КВАРТАЛ\"",
+    "legalType": "АНО",
+    "inn": "7810291634",
+    "ogrn": "ОГРН 1237800091682",
+    "account": "40703810777030064829",
+    "bank": "БИК 044030914 АО \"Фин-Мост Банк\"",
+    "amount": 86000.0,
+    "amountFormatted": "86 000,00",
+    "doc": "927",
+    "invoice": "счету № 789 от 30.07.2026",
+    "stage": "Лендинг",
+    "period": "",
+    "description": "Оплата по счету № 789 от 30.07.2026 за разработку лендинга учебного проекта. НДС не облагается.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p043",
+    "date": "2026-08-01",
+    "dateRu": "01.08.2026",
+    "project": "ИП ОРЛОВ ДАНИИЛ РУСЛАНОВИЧ",
+    "legalType": "ИП",
+    "inn": "504218730629",
+    "ogrn": "ОГРНИП 326500018730629",
+    "account": "40802810517006048295",
+    "bank": "БИК 044525769 ООО \"Речбанк\"",
+    "amount": 69000.0,
+    "amountFormatted": "69 000,00",
+    "doc": "317",
+    "invoice": "счетам № 738, 791 и 792",
+    "stage": "Сопровождение сайта",
+    "period": "",
+    "description": "Оплата по счетам № 738, 791 и 792. Ежемесячное сопровождение сайта и услуги наполнения сайта. Сумма 69000-00. Без НДС.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p044",
+    "date": "2026-08-06",
+    "dateRu": "06.08.2026",
+    "project": "ООО \"ЭКОПРАВО-КОНСАЛТ\"",
+    "legalType": "ООО",
+    "inn": "7728619405",
+    "ogrn": "ОГРН 1247700361940",
+    "account": "40702810317020086149",
+    "bank": "БИК 044525769 ООО \"Речбанк\"",
+    "amount": 58200.0,
+    "amountFormatted": "58 200,00",
+    "doc": "744",
+    "invoice": "счету № 703 от 06.07.2026",
+    "stage": "Проектирование / копирайтинг",
+    "period": "",
+    "description": "Оплата по счету № 703 от 06.07.2026, согласно договору № 174 от 12.05.2026, за проектирование и копирайтинг. Без НДС.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p045",
+    "date": "2026-08-06",
+    "dateRu": "06.08.2026",
+    "project": "ООО \"ПЛАТФОРМА-ЛК\"",
+    "legalType": "ООО",
+    "inn": "9707142689",
+    "ogrn": "ОГРН 1249700074268",
+    "account": "40702810834060052971",
+    "bank": "БИК 044030812 ФИЛИАЛ \"СЕВЕРНЫЙ\" АО \"НАВИГАТОР БАНК\"",
+    "amount": 266000.0,
+    "amountFormatted": "266 000,00",
+    "doc": "1508",
+    "invoice": "счету № 776 от 20.07.2026",
+    "stage": "Личный кабинет",
+    "period": "",
+    "description": "Оплата за разработку личного кабинета по счету № 776 от 20.07.2026, договор № 61 от 16.02.2026. Сумма 266000-00. Без НДС.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  },
+  {
+    "id": "p047",
+    "date": "2026-08-09",
+    "dateRu": "09.08.2026",
+    "project": "ООО \"ПРЕЗЕНТАРИУМ\"",
+    "legalType": "ООО",
+    "inn": "7813560472",
+    "ogrn": "ОГРН 1247800156047",
+    "account": "40702810601030078164",
+    "bank": "БИК 044030812 ФИЛИАЛ \"СЕВЕРНЫЙ\" АО \"НАВИГАТОР БАНК\"",
+    "amount": 42000.0,
+    "amountFormatted": "42 000,00",
+    "doc": "710",
+    "invoice": "счету № 798 от 31.07.2026",
+    "stage": "Презентация",
+    "period": "",
+    "description": "Оплата по счету № 798 от 31.07.2026 г. за авансовый платеж на создание презентации. Сумма 42000-00. Без НДС.",
+    "paid": true,
+    "actSent": false,
+    "actSigned": false,
+    "comment": ""
+  }
+];
+    const storageKey = 'business_up_project_payment_acts_v1';
+    let actState = loadState();
+    let activeTab = 'payments';
+
+    const el = (id) => document.getElementById(id);
+    const money = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n);
+    const money2 = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+    function loadState() {
+      try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch(e) { return {}; }
+    }
+    function saveState() { localStorage.setItem(storageKey, JSON.stringify(actState)); }
+    function stateOf(p) { return Object.assign({ actSent: p.actSent, actSigned: p.actSigned, comment: p.comment || '' }, actState[p.id] || {}); }
+    function withState(p) { return Object.assign({}, p, stateOf(p)); }
+    function statusOf(p) {
+      if (p.actSigned) return { text: 'Закрыт', cls: 'done' };
+      if (p.actSent) return { text: 'Ждем подпись', cls: 'wait' };
+      return { text: 'Акт не отправлен', cls: 'open' };
+    }
+
+    function initFilters() {
+      const projects = [...new Set(payments.map(p => p.project))].sort((a,b)=>a.localeCompare(b,'ru'));
+      const stages = [...new Set(payments.map(p => p.stage))].sort((a,b)=>a.localeCompare(b,'ru'));
+      el('projectFilter').insertAdjacentHTML('beforeend', projects.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join(''));
+      el('stageFilter').insertAdjacentHTML('beforeend', stages.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join(''));
+      const dates = payments.map(p => p.date).sort();
+      el('dateFrom').value = dates[0];
+      el('dateTo').value = dates[dates.length - 1];
+    }
+
+    function currentFiltered() {
+      const q = el('q').value.trim().toLowerCase();
+      const project = el('projectFilter').value;
+      const stage = el('stageFilter').value;
+      const from = el('dateFrom').value;
+      const to = el('dateTo').value;
+      const sent = el('sentFilter').value;
+      const signed = el('signedFilter').value;
+      return payments.map(withState).filter(p => {
+        const hay = [p.project, p.inn, p.ogrn, p.account, p.stage, p.invoice, p.doc, p.description, p.comment].join(' ').toLowerCase();
+        if (q && !hay.includes(q)) return false;
+        if (project && p.project !== project) return false;
+        if (stage && p.stage !== stage) return false;
+        if (from && p.date < from) return false;
+        if (to && p.date > to) return false;
+        if (sent === 'yes' && !p.actSent) return false;
+        if (sent === 'no' && p.actSent) return false;
+        if (signed === 'yes' && !p.actSigned) return false;
+        if (signed === 'no' && p.actSigned) return false;
+        return true;
+      });
+    }
+
+    function aggregate(list) {
+      const projects = new Map();
+      let total = 0, sentAmount = 0, signedAmount = 0, sentCount = 0, signedCount = 0;
+      for (const p of list) {
+        total += p.amount;
+        if (p.actSent) { sentAmount += p.amount; sentCount++; }
+        if (p.actSigned) { signedAmount += p.amount; signedCount++; }
+        if (!projects.has(p.project)) projects.set(p.project, {
+          project: p.project, legalType: p.legalType, inn: p.inn, ogrn: p.ogrn, account: p.account,
+          count: 0, amount: 0, sentAmount: 0, signedAmount: 0, sentCount: 0, signedCount: 0, stages: new Set()
+        });
+        const g = projects.get(p.project);
+        g.count++; g.amount += p.amount; g.stages.add(p.stage);
+        if (p.actSent) { g.sentAmount += p.amount; g.sentCount++; }
+        if (p.actSigned) { g.signedAmount += p.amount; g.signedCount++; }
+      }
+      return { total, sentAmount, signedAmount, sentCount, signedCount, projectCount: projects.size, paymentCount: list.length, projects: [...projects.values()].sort((a,b)=>b.amount-a.amount) };
+    }
+
+    function renderSummary(list) {
+      const a = aggregate(list);
+      const unsignedAmount = a.total - a.signedAmount;
+      const unsentCount = a.paymentCount - a.sentCount;
+      const cards = [
+        ['Проектов / юрлиц', a.projectCount, 'в текущем фильтре'],
+        ['Оплат', a.paymentCount, 'поступления по проектам'],
+        ['Получено', money(a.total), 'все оплаченные этапы'],
+        ['Акты отправлены', money(a.sentAmount), `${a.sentCount} из ${a.paymentCount} оплат`],
+        ['Акты подписаны', money(a.signedAmount), `${a.signedCount} закрытых оплат`],
+        ['Не закрыто актами', money(unsignedAmount), `${a.paymentCount - a.signedCount} оплат`]
+      ];
+      el('summaryCards').innerHTML = cards.map(c => `<article class="card"><div class="label">${c[0]}</div><div class="value">${c[1]}</div><div class="hint">${c[2]}</div></article>`).join('');
+      el('tableCounter').textContent = `${a.paymentCount} оплат · ${money(a.total)}`;
+      el('projectCounter').textContent = `${a.projectCount} юрлиц`;
+      const top = a.projects[0];
+      el('finalSummary').innerHTML = top ? `
+        <b>Итог по выбранным данным:</b> учтено <b>${a.paymentCount}</b> проектных оплат по <b>${a.projectCount}</b> юрлицам на сумму <b>${money(a.total)}</b>. Самый крупный проект по поступлениям — <b>${esc(top.project)}</b>: <b>${money(top.amount)}</b>. Закрыто подписанными актами: <b>${money(a.signedAmount)}</b>, ожидает закрытия: <b>${money(unsignedAmount)}</b>.` : 'Нет данных по выбранным фильтрам.';
+    }
+
+    function renderProjectCards(list) {
+      const a = aggregate(list);
+      const selected = el('projectFilter').value;
+      el('projectCards').innerHTML = a.projects.map(g => {
+        const pct = g.amount ? Math.round((g.signedAmount / g.amount) * 100) : 0;
+        return `<div class="project-card ${selected === g.project ? 'active' : ''}" data-project="${esc(g.project)}">
+          <div class="top"><div class="name">${esc(g.project)}</div><div class="sum">${money(g.amount)}</div></div>
+          <div class="meta">${esc(g.inn)} · ${esc(g.ogrn)} · ${g.count} оплат · этапы: ${[...g.stages].map(esc).join(', ')}</div>
+          <div class="progress" title="Подписано актами: ${pct}%"><i style="width:${pct}%"></i></div>
+          <div class="meta">Подписано: ${money(g.signedAmount)} / ${pct}%</div>
+        </div>`;
+      }).join('') || '<div class="muted">Нет проектов по текущему фильтру.</div>';
+    }
+
+    function renderPaymentsTable(list) {
+      el('paymentsRows').innerHTML = list.sort((a,b)=>a.date.localeCompare(b.date) || a.project.localeCompare(b.project,'ru')).map(p => {
+        const s = statusOf(p);
+        return `<tr>
+          <td><b>${p.dateRu}</b></td>
+          <td><b>${esc(p.project)}</b><div class="muted small">${esc(p.legalType)} · р/с ${esc(p.account)}</div></td>
+          <td><div>ИНН ${esc(p.inn)}</div><div class="muted small">${esc(p.ogrn)}</div></td>
+          <td><span class="stage">${esc(p.stage)}</span>${p.period ? `<div class="muted small">Период: ${esc(p.period)}</div>` : ''}</td>
+          <td><b>${esc(p.invoice)}</b><div class="muted small">Док. ${esc(p.doc)}</div><div class="muted small">${esc(p.description)}</div></td>
+          <td class="money">${money2(p.amount)}</td>
+          <td><span class="status done">Оплачено</span></td>
+          <td class="checkcell"><input type="checkbox" data-action="sent" data-id="${p.id}" ${p.actSent ? 'checked' : ''} aria-label="Акт отправлен" /></td>
+          <td class="checkcell"><input type="checkbox" data-action="signed" data-id="${p.id}" ${p.actSigned ? 'checked' : ''} aria-label="Акт подписан" /></td>
+          <td><span class="status ${s.cls}">${s.text}</span></td>
+          <td class="comment"><input type="text" data-action="comment" data-id="${p.id}" value="${esc(p.comment)}" placeholder="например: отправить повторно" /></td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="11" class="muted">Нет оплат по текущему фильтру.</td></tr>';
+    }
+
+    function renderProjectsTable(list) {
+      const a = aggregate(list);
+      el('projectRows').innerHTML = a.projects.map(g => {
+        const allSigned = g.count > 0 && g.signedCount === g.count;
+        const anySent = g.sentCount > 0;
+        const s = allSigned ? { text: 'Закрыт', cls: 'done' } : anySent ? { text: 'В работе', cls: 'wait' } : { text: 'Акты не отправлены', cls: 'open' };
+        return `<tr>
+          <td><b>${esc(g.project)}</b><div class="muted small">р/с ${esc(g.account)}</div></td>
+          <td>${esc(g.inn)}</td>
+          <td>${esc(g.ogrn)}</td>
+          <td>${g.count}</td>
+          <td class="money">${money2(g.amount)}</td>
+          <td class="money">${money2(g.sentAmount)}<div class="muted small">${g.sentCount} оплат</div></td>
+          <td class="money">${money2(g.signedAmount)}<div class="muted small">${g.signedCount} оплат</div></td>
+          <td><span class="status ${s.cls}">${s.text}</span></td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="8" class="muted">Нет проектов по текущему фильтру.</td></tr>';
+    }
+
+    function render() {
+      const list = currentFiltered();
+      renderSummary(list);
+      renderProjectCards(list);
+      renderPaymentsTable(list);
+      renderProjectsTable(list);
+      el('paymentsView').classList.toggle('hidden', activeTab !== 'payments');
+      el('projectsView').classList.toggle('hidden', activeTab !== 'projects');
+      document.querySelectorAll('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === activeTab));
+    }
+
+    function updatePayment(id, patch) {
+      const cur = stateOf(payments.find(p => p.id === id));
+      const next = Object.assign({}, cur, patch);
+      if (next.actSigned) next.actSent = true;
+      actState[id] = next;
+      saveState();
+      render();
+    }
+
+    function exportCsv() {
+      const rows = currentFiltered();
+      const headers = ['Дата','Проект / юрлицо','ИНН','ОГРН/ОГРНИП','Этап','Счет / документ','Сумма','Оплачено','Акт отправлен','Акт подписан','Статус','Комментарий','Назначение платежа'];
+      const csvRows = [headers, ...rows.map(p => [p.dateRu,p.project,p.inn,p.ogrn,p.stage,p.invoice,p.amount.toFixed(2).replace('.',','),'Да',p.actSent?'Да':'Нет',p.actSigned?'Да':'Нет',statusOf(p).text,p.comment,p.description])];
+      const csv = '﻿' + csvRows.map(r => r.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(';')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'project_payments_acts.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    document.addEventListener('input', (e) => {
+      if (['q','projectFilter','stageFilter','dateFrom','dateTo','sentFilter','signedFilter'].includes(e.target.id)) render();
+      if (e.target.dataset.action === 'comment') {
+        const id = e.target.dataset.id;
+        const cur = stateOf(payments.find(p => p.id === id));
+        actState[id] = Object.assign({}, cur, { comment: e.target.value });
+        saveState();
+      }
+    });
+    document.addEventListener('change', (e) => {
+      if (e.target.dataset.action === 'sent') updatePayment(e.target.dataset.id, { actSent: e.target.checked });
+      if (e.target.dataset.action === 'signed') updatePayment(e.target.dataset.id, { actSigned: e.target.checked });
+    });
+    document.addEventListener('click', (e) => {
+      const projectCard = e.target.closest('.project-card');
+      if (projectCard) { el('projectFilter').value = projectCard.dataset.project; render(); return; }
+      const tab = e.target.closest('.tab');
+      if (tab) { activeTab = tab.dataset.tab; render(); return; }
+      if (e.target.id === 'clearFilters') {
+        el('q').value = ''; el('projectFilter').value = ''; el('stageFilter').value = ''; el('sentFilter').value = ''; el('signedFilter').value = '';
+        const dates = payments.map(p => p.date).sort(); el('dateFrom').value = dates[0]; el('dateTo').value = dates[dates.length - 1]; render();
+      }
+      if (e.target.id === 'markVisibleSent') {
+        currentFiltered().forEach(p => { const cur = stateOf(p); actState[p.id] = Object.assign({}, cur, {actSent:true}); }); saveState(); render();
+      }
+      if (e.target.id === 'markVisibleSigned') {
+        currentFiltered().forEach(p => { const cur = stateOf(p); actState[p.id] = Object.assign({}, cur, {actSent:true, actSigned:true}); }); saveState(); render();
+      }
+      if (e.target.id === 'exportCsv') exportCsv();
+      if (e.target.id === 'printBtn') window.print();
+      if (e.target.id === 'resetActs') {
+        if (confirm('Сбросить все отметки актов и комментарии?')) { actState = {}; saveState(); render(); }
+      }
+    });
+
+    initFilters();
+    render();
+  </script>
+</body>
+</html>
