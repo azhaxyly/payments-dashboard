@@ -167,15 +167,18 @@ export async function listProjects(f: PaymentFilters): Promise<{ items: ProjectS
 
 export async function filterOptions(): Promise<{
   projects: string[]
+  legalEntities: string[]
   stages: string[]
   dateRange: { from: string; to: string }
 }> {
   const rows = await loadJoined()
   const projects = [...new Set(rows.map((r) => r.project.name))].sort((a, b) => a.localeCompare(b, 'ru'))
+  const legalEntities = [...new Set(rows.map((r) => r.client.name))].sort((a, b) => a.localeCompare(b, 'ru'))
   const stages = [...new Set(rows.map((r) => r.payment.serviceStage))].sort((a, b) => a.localeCompare(b, 'ru'))
   const dates = rows.map((r) => r.payment.paymentDate).sort()
   return {
     projects,
+    legalEntities,
     stages,
     dateRange: { from: dates[0] ?? '', to: dates[dates.length - 1] ?? '' },
   }
