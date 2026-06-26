@@ -13,6 +13,8 @@ const cards = computed(() => {
     { label: 'Акты отправлены', value: money(s.sentAmount), hint: `${s.sentCount} из ${s.paymentCount} оплат` },
     { label: 'Акты подписаны', value: money(s.signedAmount), hint: `${s.signedCount} закрытых оплат` },
     { label: 'Не закрыто актами', value: money(s.unsignedAmount), hint: `${s.paymentCount - s.signedCount} оплат` },
+    { label: 'Без отправленного акта', value: String(s.unsentCount), hint: 'акт ещё не отправлен' },
+    { label: 'Отправлен, ждёт подписи', value: String(s.sentCount - s.signedCount), hint: 'отправлен, но не подписан' },
   ]
 })
 </script>
@@ -30,7 +32,7 @@ const cards = computed(() => {
 <style scoped>
 .cards {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
 .card {
