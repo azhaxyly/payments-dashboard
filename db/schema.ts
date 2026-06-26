@@ -17,6 +17,7 @@ export const clients = pgTable('clients', {
   bankAccount: text('bank_account'),
   bank: text('bank'),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 })
 
 export const projects = pgTable('projects', {
@@ -27,6 +28,7 @@ export const projects = pgTable('projects', {
     .references(() => clients.id),
   status: text('status').notNull().default('active'),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 })
 
 export const payments = pgTable('payments', {
@@ -48,6 +50,7 @@ export const payments = pgTable('payments', {
   source: text('source').notNull().default('seed'),
   naturalKey: text('natural_key').notNull().unique(),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 })
 
 export const acts = pgTable('acts', {
@@ -61,6 +64,7 @@ export const acts = pgTable('acts', {
   isSigned: boolean('is_signed').notNull().default(false),
   signedAt: timestamp('signed_at'),
   managerComment: text('manager_comment').notNull().default(''),
+  createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 })
 
