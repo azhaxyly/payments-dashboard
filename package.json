@@ -11,6 +11,7 @@
     "postinstall": "nuxt prepare",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx db/seed.ts",
+    "db:clear": "tsx db/clear.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

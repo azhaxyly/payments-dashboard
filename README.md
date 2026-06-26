@@ -29,6 +29,7 @@ pnpm db:push                  # накатить схему в Postgres (drizzle
 pnpm db:seed                  # засеять golden-fixture (24 оплаты, 19 юрлиц)
 pnpm dev                      # http://localhost:3000
 pnpm test                     # Vitest: actStatus и aggregate (эталонные числа)
+pnpm db:clear                 # очистить БД (acts→payments→projects→clients); вернуть данные — pnpm db:seed
 ```
 
 > БД — **Postgres (Neon)**: одна и та же база локально и в проде; бесплатный проект на neon.tech даёт
