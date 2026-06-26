@@ -79,10 +79,31 @@ function onPick(e: Event) {
 </template>
 
 <style scoped>
-.ingest { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
-.title { font-weight: 600; margin-bottom: 10px; }
+.ingest {
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  border: 1.5px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.title {
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.title::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
 .drop {
-  border: 1.5px dashed var(--border);
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 30%, var(--border));
   border-radius: 12px;
   padding: 22px;
   text-align: center;
