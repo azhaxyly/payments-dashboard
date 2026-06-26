@@ -16,10 +16,13 @@ export default defineEventHandler(async (event) => {
   try {
     return await ingestPdf(filePart.data)
   } catch (e) {
+    // Различаем «какая часть пайплайна упала»: ExtractionError — модель вернула пустой/
+    // невалидный по схеме результат (вина данных/ответа) → 422, клиент видит причину.
     if (e instanceof ExtractionError) {
       throw createError({ statusCode: 422, statusMessage: e.message })
     }
 
+    // Всё остальное (таймаут SDK, сбой парсера PDF, БД) — инфраструктурная ошибка → 503.
     console.error('[ingest] pipeline error:', e)
     throw createError({
       statusCode: 503,

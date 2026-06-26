@@ -26,6 +26,9 @@ export class ClaudeExtractor implements PdfExtractor {
   }
 
   async extract(pdfText: string): Promise<RawOperation[]> {
+    // Структурированный вывод через tool-use: единственная Zod-схема — источник истины и
+    // для контракта инструмента (JSON-schema), и для рантайм-валидации ответа ниже.
+    // target: 'openApi3' — Anthropic ожидает JSON-schema в OpenAPI-совместимом диалекте.
     const inputSchema = zodToJsonSchema(ExtractionResult, { target: 'openApi3' })
 
     const response = await this.client.messages.create({
@@ -39,7 +42,10 @@ export class ClaudeExtractor implements PdfExtractor {
           input_schema: inputSchema as Anthropic.Tool.InputSchema,
         },
       ],
+      // Форсим вызов именно нашего инструмента — модель не может ответить свободным текстом,
+      // только валидным input по схеме. Это и есть гарантия structured output.
       tool_choice: { type: 'tool', name: 'emit_operations' },
+      // Оборачиваем текст выписки в разделители, чтобы модель не путала его с инструкцией.
       messages: [{ role: 'user', content: `Текст выписки:\n<<<\n${pdfText}\n>>>` }],
     })
 
@@ -50,6 +56,9 @@ export class ClaudeExtractor implements PdfExtractor {
       throw new ExtractionError('Модель не вернула структурированный результат (нет tool_use).')
     }
 
+    // Доверяй, но проверяй: даже форсированный tool-use не гарантирует, что модель
+    // не нарушила схему (формат ИНН, отрицательная сумма и т.п.) — ловим это Zod'ом,
+    // а не падаем на кривых данных уже в БД.
     const parsed = ExtractionResult.safeParse(toolUse.input)
     if (!parsed.success) {
       throw new ExtractionError(

@@ -23,6 +23,8 @@ export class MockExtractor implements PdfExtractor {
       confidence: 0.95,
     }))
 
+    // Намеренно подмешиваем 2 непроектные операции (пополнение своими средствами и возврат
+    // налога): без API-ключа они демонстрируют работу отсева — уходят в skipped, а не в БД.
     const nonProjectOps: RawOperation[] = [
       {
         date: '2026-07-20',

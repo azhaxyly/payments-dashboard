@@ -17,6 +17,7 @@ export async function patchAct(id: number, patch: ActPatch): Promise<ActDTO | nu
   const now = new Date()
   let isSent = patch.isSent ?? act.isSent
   let isSigned = patch.isSigned ?? act.isSigned
+  // Инвариант: подписать можно только отправленный акт, поэтому isSigned форсит isSent.
   if (isSigned) isSent = true
 
   const updated = (
@@ -25,6 +26,8 @@ export async function patchAct(id: number, patch: ActPatch): Promise<ActDTO | nu
       .set({
         isSent,
         isSigned,
+        // Таймстемп проставляем по первому переходу флага в true и больше не двигаем
+        // (act.sentAt ?? now); снятие флага очищает его.
         sentAt: isSent ? (act.sentAt ?? now) : null,
         signedAt: isSigned ? (act.signedAt ?? now) : null,
         managerComment: patch.comment ?? act.managerComment,

@@ -92,9 +92,12 @@ export function aggregate(list: AggregateInput[]): Aggregate {
     }
   }
 
+  // Проекты — по убыванию суммы (крупнейшие плательщики сверху).
   const projects = [...groups.values()].sort((a, b) => b.amount - a.amount)
   for (const g of projects) {
     g.signedPct = g.amount ? Math.round((g.signedAmount / g.amount) * 100) : 0
+    // Статус проекта на уровне закрытия актов: closed — все акты подписаны;
+    // in_work — хоть один отправлен; open — ничего ещё не отправлено.
     g.closeStatus =
       g.count > 0 && g.signedCount === g.count ? 'closed' : g.sentCount > 0 ? 'in_work' : 'open'
   }

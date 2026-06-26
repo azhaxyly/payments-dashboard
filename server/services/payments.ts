@@ -79,6 +79,8 @@ function matchesFilters(r: JoinedRow, f: PaymentFilters): boolean {
   if (f.sent === 'no' && r.act.isSent) return false
   if (f.signed === 'yes' && !r.act.isSigned) return false
   if (f.signed === 'no' && r.act.isSigned) return false
+  // status — производный фильтр: сравниваем не с колонкой, а с вычисленным actStatus
+  // (включая «attention», которого в БД нет), чтобы UI-фильтр совпадал с тем, что видно в таблице.
   if (
     f.status &&
     actStatus({ isSent: r.act.isSent, isSigned: r.act.isSigned }, r.payment.paymentDate) !== f.status
@@ -125,6 +127,8 @@ export async function listPayments(f: PaymentFilters): Promise<{
   const items = rows
     .map(toDTO)
     .sort((a, b) => a.date.localeCompare(b.date) || a.project.localeCompare(b.project, 'ru'))
+  // Итоги считаем над теми же отфильтрованными строками, что и таблицу: summary всегда
+  // соответствует текущим фильтрам, а фронт его не пересчитывает — берёт готовым.
   const a = aggregate(toAggInput(rows))
   const top = a.projects[0]
   const summary: SummaryDTO = {

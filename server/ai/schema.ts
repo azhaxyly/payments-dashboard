@@ -12,6 +12,8 @@ export const RawOperation = z.object({
   doc: z.string().nullable().describe('Номер платёжного документа, либо null'),
   invoice: z.string().nullable().describe('Счёт/договор из назначения платежа, либо null'),
   purpose: z.string().describe('Полное назначение платежа'),
+  // Намеренно string, а не z.enum(SERVICE_STAGES): словарь этапов даём модели в промпте как
+  // ориентир, но не роняем всю выписку из-за одного непредвиденного этапа — нормализуем мягко.
   serviceStage: z
     .string()
     .describe('Нормализованный тип услуги/этап из словаря; если неясно — "Оплата по проекту"'),
@@ -51,4 +53,6 @@ export const SERVICE_STAGES = [
   'Оплата по проекту',
 ] as const
 
+// Порог уверенности: операции ниже не импортируем молча, а отправляем в needsReview —
+// лучше показать оператору сомнительное извлечение, чем тихо занести в БД мусор.
 export const CONFIDENCE_THRESHOLD = 0.6

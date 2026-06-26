@@ -8,6 +8,9 @@ import { extractPdfText } from '../ai/pdf'
 import { CONFIDENCE_THRESHOLD, type RawOperation } from '../ai/schema'
 import type { IngestReport } from '../types'
 
+// Выбор стратегии извлечения за интерфейсом PdfExtractor: есть ключ — реальный Claude,
+// нет — MockExtractor (golden-fixture). Так демо и CI остаются зелёными без API-ключа,
+// а подмена реализации точечная — остальной пайплайн от выбора не зависит.
 export function selectExtractor(): PdfExtractor {
   const cfg = useRuntimeConfig()
   if (cfg.anthropicApiKey) {
@@ -36,6 +39,9 @@ export async function upsertOperations(
     extractor: extractorKind,
   }
 
+  // Три отсечки до записи, по убыванию «дешевизны» проверки: непроектная операция →
+  // низкая уверенность → дубль по натуральному ключу. Всё, что отсеяли, попадает в отчёт
+  // с причиной, чтобы оператор видел, почему платёж не импортирован.
   for (const op of operations) {
     if (!op.isProjectPayment) {
       report.skipped++
@@ -93,6 +99,8 @@ export async function upsertOperations(
       )[0]
     }
 
+    // Клиент и проект создаём на лету по мере распознавания. По умолчанию 1 проект на
+    // клиента (схема допускает несколько) — исходные данные дают именно связь 1:1.
     let project = (
       await db.select().from(schema.projects).where(eq(schema.projects.clientId, client.id))
     )[0]
