@@ -1,0 +1,16 @@
+node_modules
+.nuxt
+.output
+.data
+dist
+*.log
+
+# local DB
+dev.db
+dev.db-*
+
+# env
+.env
+.env.local
+
+.DS_Store
