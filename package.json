@@ -9,15 +9,13 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx db/migrate.ts",
+    "db:push": "drizzle-kit push",
     "db:seed": "tsx db/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
-    "better-sqlite3": "^11.8.1",
     "drizzle-orm": "^0.38.4",
     "nuxt": "^3.15.4",
     "postgres": "^3.4.5",

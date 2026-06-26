@@ -14,3 +14,5 @@ dev.db-*
 .env.local
 
 .DS_Store
+
+.claude

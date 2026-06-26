@@ -4,7 +4,7 @@
 (отправлен / подписан / требует внимания), плюс **AI-пайплайн распознавания PDF банковской выписки**
 на Claude — `PDF → структурированный JSON → БД`, с валидацией и отсевом непроектных операций.
 
-Стек: **Nuxt 3 (Vue 3 + TypeScript, Nitro server API)** · **Drizzle ORM** (SQLite локально / Postgres в проде) ·
+Стек: **Nuxt 3 (Vue 3 + TypeScript, Nitro server API)** · **Drizzle ORM + Postgres (Neon)** ·
 **Anthropic SDK** · **Zod** · **Vitest**. Один деплой на Vercel, сквозные TS-типы данные → логика → вид.
 
 > Как я раскладывал ТЗ на технические требования и почему принял такие решения — в
@@ -16,12 +16,14 @@
 
 ```bash
 pnpm install
-cp .env.example .env          # ключ Anthropic не обязателен — без него работает MockExtractor
-pnpm db:generate              # сгенерировать SQL-миграцию из схемы
-pnpm db:migrate               # применить миграции (создаёт dev.db)
+cp .env.example .env          # впишите DATABASE_URL (Neon). Ключ Anthropic не обязателен — без него MockExtractor
+pnpm db:push                  # накатить схему в Postgres (drizzle-kit push)
 pnpm db:seed                  # засеять golden-fixture (24 оплаты, 19 юрлиц)
 pnpm dev                      # http://localhost:3000
 ```
+
+> БД — **Postgres (Neon)**. Локально и в проде одна и та же база; бесплатный проект на neon.tech даёт
+> `DATABASE_URL`. Подключение — `postgres-js` (`db/index.ts`), идемпотентный seed — `db/seed.ts`.
 
 Проверка:
 
@@ -148,12 +150,12 @@ app/       composables/useDashboard.ts · components/* · pages/index.vue   ← 
 ## Деплой (Vercel + Neon Postgres)
 
 1. Vercel определяет Nuxt-preset автоматически.
-2. Задать env: `DATABASE_URL` (Neon `postgres://…`), `ANTHROPIC_API_KEY`, `AI_MODEL`, `NOW`, `ATTENTION_DAYS`.
-3. Прогнать миграции и seed на проде один раз.
+2. Задать env: `DATABASE_URL` (Neon), `ANTHROPIC_API_KEY`, `AI_MODEL`, `NOW`, `ATTENTION_DAYS`.
+3. Один раз накатить схему и seed на прод-БД: `pnpm db:push && pnpm db:seed` (с прод `DATABASE_URL`).
 
-> Для прод-Postgres схема переносится 1:1 на `drizzle-orm/pg-core` (pgTable / serial / timestamp / boolean /
-> numeric); выбор драйвера — по `DATABASE_URL` (better-sqlite3 локально / postgres-js в проде). Доменный слой,
-> сервисы и API остаются без изменений (зависят только от Drizzle-абстракции).
+> Схема — `drizzle-orm/pg-core`, драйвер — `postgres-js`. Доменный слой, сервисы и API зависят только от
+> Drizzle-абстракции. Под высокую конкурентность на serverless имеет смысл перейти на HTTP-драйвер Neon
+> (`@neondatabase/serverless` + `drizzle-orm/neon-http`) — точечная замена в `db/index.ts`.
 
 ## Что НЕ делаем (по ТЗ)
 

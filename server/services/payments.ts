@@ -21,7 +21,7 @@ interface JoinedRow {
   act: typeof schema.acts.$inferSelect
 }
 
-function loadJoined(): JoinedRow[] {
+async function loadJoined(): Promise<JoinedRow[]> {
   const db = getDb()
   return db
     .select({
@@ -34,7 +34,6 @@ function loadJoined(): JoinedRow[] {
     .innerJoin(schema.clients, eq(schema.payments.clientId, schema.clients.id))
     .innerJoin(schema.projects, eq(schema.payments.projectId, schema.projects.id))
     .innerJoin(schema.acts, eq(schema.acts.paymentId, schema.payments.id))
-    .all()
 }
 
 function toDTO(r: JoinedRow): PaymentDTO {
@@ -113,11 +112,11 @@ function toAggInput(rows: JoinedRow[]): AggregateInput[] {
   }))
 }
 
-export function listPayments(f: PaymentFilters): {
+export async function listPayments(f: PaymentFilters): Promise<{
   items: PaymentDTO[]
   summary: SummaryDTO
-} {
-  const rows = loadJoined().filter((r) => matchesFilters(r, f))
+}> {
+  const rows = (await loadJoined()).filter((r) => matchesFilters(r, f))
   const items = rows
     .map(toDTO)
     .sort((a, b) => a.date.localeCompare(b.date) || a.project.localeCompare(b.project, 'ru'))
@@ -138,8 +137,8 @@ export function listPayments(f: PaymentFilters): {
   return { items, summary }
 }
 
-export function listProjects(f: PaymentFilters): { items: ProjectSummaryDTO[] } {
-  const rows = loadJoined().filter((r) => matchesFilters(r, f))
+export async function listProjects(f: PaymentFilters): Promise<{ items: ProjectSummaryDTO[] }> {
+  const rows = (await loadJoined()).filter((r) => matchesFilters(r, f))
   const a = aggregate(toAggInput(rows))
   return {
     items: a.projects.map((g) => ({
@@ -161,8 +160,12 @@ export function listProjects(f: PaymentFilters): { items: ProjectSummaryDTO[] } 
   }
 }
 
-export function filterOptions(): { projects: string[]; stages: string[]; dateRange: { from: string; to: string } } {
-  const rows = loadJoined()
+export async function filterOptions(): Promise<{
+  projects: string[]
+  stages: string[]
+  dateRange: { from: string; to: string }
+}> {
+  const rows = await loadJoined()
   const projects = [...new Set(rows.map((r) => r.project.name))].sort((a, b) => a.localeCompare(b, 'ru'))
   const stages = [...new Set(rows.map((r) => r.payment.serviceStage))].sort((a, b) => a.localeCompare(b, 'ru'))
   const dates = rows.map((r) => r.payment.paymentDate).sort()

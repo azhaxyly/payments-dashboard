@@ -1,13 +1,10 @@
 import { defineConfig } from 'drizzle-kit'
 
-const url = process.env.DATABASE_URL || 'file:./dev.db'
-const isPg = url.startsWith('postgres')
+;(process as NodeJS.Process & { loadEnvFile?: (p?: string) => void }).loadEnvFile?.('.env')
 
 export default defineConfig({
   schema: './db/schema.ts',
   out: './db/migrations',
-  dialect: isPg ? 'postgresql' : 'sqlite',
-  dbCredentials: isPg
-    ? { url }
-    : { url: url.replace(/^file:/, '') },
+  dialect: 'postgresql',
+  dbCredentials: { url: process.env.DATABASE_URL! },
 })

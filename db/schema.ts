@@ -1,28 +1,36 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
+import {
+  pgTable,
+  serial,
+  text,
+  integer,
+  doublePrecision,
+  boolean,
+  timestamp,
+} from 'drizzle-orm/pg-core'
 
-export const clients = sqliteTable('clients', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const clients = pgTable('clients', {
+  id: serial('id').primaryKey(),
   name: text('name').notNull(),
   legalType: text('legal_type').notNull(),
   inn: text('inn').notNull().unique(),
   ogrn: text('ogrn'),
   bankAccount: text('bank_account'),
   bank: text('bank'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  createdAt: timestamp('created_at').defaultNow(),
 })
 
-export const projects = sqliteTable('projects', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const projects = pgTable('projects', {
+  id: serial('id').primaryKey(),
   name: text('name').notNull(),
   clientId: integer('client_id')
     .notNull()
     .references(() => clients.id),
   status: text('status').notNull().default('active'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  createdAt: timestamp('created_at').defaultNow(),
 })
 
-export const payments = sqliteTable('payments', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const payments = pgTable('payments', {
+  id: serial('id').primaryKey(),
   projectId: integer('project_id')
     .notNull()
     .references(() => projects.id),
@@ -30,7 +38,7 @@ export const payments = sqliteTable('payments', {
     .notNull()
     .references(() => clients.id),
   paymentDate: text('payment_date').notNull(),
-  amount: real('amount').notNull(),
+  amount: doublePrecision('amount').notNull(),
   paymentPurpose: text('payment_purpose').notNull(),
   serviceStage: text('service_stage').notNull(),
   invoice: text('invoice'),
@@ -39,21 +47,21 @@ export const payments = sqliteTable('payments', {
   account: text('account'),
   source: text('source').notNull().default('seed'),
   naturalKey: text('natural_key').notNull().unique(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  createdAt: timestamp('created_at').defaultNow(),
 })
 
-export const acts = sqliteTable('acts', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const acts = pgTable('acts', {
+  id: serial('id').primaryKey(),
   paymentId: integer('payment_id')
     .notNull()
     .unique()
     .references(() => payments.id),
-  isSent: integer('is_sent', { mode: 'boolean' }).notNull().default(false),
-  sentAt: integer('sent_at', { mode: 'timestamp' }),
-  isSigned: integer('is_signed', { mode: 'boolean' }).notNull().default(false),
-  signedAt: integer('signed_at', { mode: 'timestamp' }),
+  isSent: boolean('is_sent').notNull().default(false),
+  sentAt: timestamp('sent_at'),
+  isSigned: boolean('is_signed').notNull().default(false),
+  signedAt: timestamp('signed_at'),
   managerComment: text('manager_comment').notNull().default(''),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: timestamp('updated_at').defaultNow(),
 })
 
 export type Client = typeof clients.$inferSelect

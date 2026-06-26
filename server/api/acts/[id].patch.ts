@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     isSigned: typeof body?.isSigned === 'boolean' ? body.isSigned : undefined,
     comment: typeof body?.comment === 'string' ? body.comment : undefined,
   }
-  const result = patchAct(id, patch)
+  const result = await patchAct(id, patch)
   if (!result) {
     throw createError({ statusCode: 404, statusMessage: 'Акт не найден' })
   }

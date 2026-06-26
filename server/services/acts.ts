@@ -9,9 +9,9 @@ export interface ActPatch {
   comment?: string
 }
 
-export function patchAct(id: number, patch: ActPatch): ActDTO | null {
+export async function patchAct(id: number, patch: ActPatch): Promise<ActDTO | null> {
   const db = getDb()
-  const act = db.select().from(schema.acts).where(eq(schema.acts.id, id)).get()
+  const act = (await db.select().from(schema.acts).where(eq(schema.acts.id, id)))[0]
   if (!act) return null
 
   const now = new Date()
@@ -19,27 +19,24 @@ export function patchAct(id: number, patch: ActPatch): ActDTO | null {
   let isSigned = patch.isSigned ?? act.isSigned
   if (isSigned) isSent = true
 
-  const next = {
-    isSent,
-    isSigned,
-    sentAt: isSent ? (act.sentAt ?? now) : null,
-    signedAt: isSigned ? (act.signedAt ?? now) : null,
-    managerComment: patch.comment ?? act.managerComment,
-    updatedAt: now,
-  }
+  const updated = (
+    await db
+      .update(schema.acts)
+      .set({
+        isSent,
+        isSigned,
+        sentAt: isSent ? (act.sentAt ?? now) : null,
+        signedAt: isSigned ? (act.signedAt ?? now) : null,
+        managerComment: patch.comment ?? act.managerComment,
+        updatedAt: now,
+      })
+      .where(eq(schema.acts.id, id))
+      .returning()
+  )[0]
 
-  const updated = db
-    .update(schema.acts)
-    .set(next)
-    .where(eq(schema.acts.id, id))
-    .returning()
-    .get()
-
-  const payment = db
-    .select()
-    .from(schema.payments)
-    .where(eq(schema.payments.id, updated.paymentId))
-    .get()
+  const payment = (
+    await db.select().from(schema.payments).where(eq(schema.payments.id, updated.paymentId))
+  )[0]
 
   return {
     id: updated.id,

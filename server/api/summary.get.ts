@@ -1,5 +1,6 @@
 import { listPayments } from '../services/payments'
 
-export default defineEventHandler((event) => {
-  return listPayments(parseFilters(event)).summary
+export default defineEventHandler(async (event) => {
+  const { summary } = await listPayments(parseFilters(event))
+  return summary
 })
