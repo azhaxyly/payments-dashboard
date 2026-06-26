@@ -79,6 +79,11 @@ function matchesFilters(r: JoinedRow, f: PaymentFilters): boolean {
   if (f.sent === 'no' && r.act.isSent) return false
   if (f.signed === 'yes' && !r.act.isSigned) return false
   if (f.signed === 'no' && r.act.isSigned) return false
+  if (
+    f.status &&
+    actStatus({ isSent: r.act.isSent, isSigned: r.act.isSigned }, r.payment.paymentDate) !== f.status
+  )
+    return false
   if (f.q) {
     const hay = [
       r.project.name,

@@ -8,6 +8,7 @@ export interface PaymentFilters {
   to?: string
   sent?: 'yes' | 'no'
   signed?: 'yes' | 'no'
+  status?: ActStatus
   q?: string
 }
 
