@@ -33,6 +33,7 @@ function selectProject(name: string) {
     <FiltersBar
       :filters="dash.filters"
       :project-options="dash.options.value.projects"
+      :legal-entity-options="dash.options.value.legalEntities"
       :stage-options="dash.options.value.stages"
       :has-active-filters="dash.hasActiveFilters.value"
       @reset="dash.resetFilters()"

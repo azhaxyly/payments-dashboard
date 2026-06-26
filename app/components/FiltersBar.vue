@@ -4,6 +4,7 @@ import type { Filters } from '~/composables/useDashboard'
 defineProps<{
   filters: Filters
   projectOptions: string[]
+  legalEntityOptions: string[]
   stageOptions: string[]
   hasActiveFilters: boolean
 }>()
@@ -18,6 +19,10 @@ defineEmits<{ reset: [] }>()
       class="ctrl grow"
       placeholder="Поиск: юрлицо, ИНН, счёт, назначение…"
     />
+    <select v-model="filters.legalEntity" class="ctrl">
+      <option value="">Все юрлица</option>
+      <option v-for="e in legalEntityOptions" :key="e" :value="e">{{ e }}</option>
+    </select>
     <select v-model="filters.project" class="ctrl">
       <option value="">Все проекты</option>
       <option v-for="p in projectOptions" :key="p" :value="p">{{ p }}</option>
@@ -37,6 +42,13 @@ defineEmits<{ reset: [] }>()
       <option value="">Подпись: любая</option>
       <option value="yes">Подписан</option>
       <option value="no">Не подписан</option>
+    </select>
+    <select v-model="filters.status" class="ctrl">
+      <option value="">Статус: любой</option>
+      <option value="not_sent">Не отправлен</option>
+      <option value="waiting">Ждёт подпись</option>
+      <option value="closed">Закрыт</option>
+      <option value="attention">Требует внимания</option>
     </select>
     <button v-if="hasActiveFilters" class="reset" @click="$emit('reset')">Сбросить</button>
   </section>

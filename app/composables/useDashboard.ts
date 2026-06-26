@@ -5,19 +5,23 @@ import type {
   ProjectSummaryDTO,
   ActDTO,
 } from '~~/server/types'
+import type { ActStatus } from '~~/server/domain/actStatus'
 
 export interface Filters {
   q: string
   project: string
+  legalEntity: string
   stage: string
   from: string
   to: string
   sent: '' | 'yes' | 'no'
   signed: '' | 'yes' | 'no'
+  status: '' | ActStatus
 }
 
 interface FilterOptions {
   projects: string[]
+  legalEntities: string[]
   stages: string[]
   dateRange: { from: string; to: string }
 }
@@ -39,28 +43,32 @@ export function useDashboard() {
   const filters = reactive<Filters>({
     q: '',
     project: '',
+    legalEntity: '',
     stage: '',
     from: '',
     to: '',
     sent: '',
     signed: '',
+    status: '',
   })
 
   const items = ref<PaymentDTO[]>([])
   const summary = ref<SummaryDTO>({ ...emptySummary })
   const projects = ref<ProjectSummaryDTO[]>([])
-  const options = ref<FilterOptions>({ projects: [], stages: [], dateRange: { from: '', to: '' } })
+  const options = ref<FilterOptions>({ projects: [], legalEntities: [], stages: [], dateRange: { from: '', to: '' } })
   const loading = ref(false)
 
   function query() {
     const q: Record<string, string> = {}
     if (filters.q) q.q = filters.q
     if (filters.project) q.project = filters.project
+    if (filters.legalEntity) q.legalEntity = filters.legalEntity
     if (filters.stage) q.stage = filters.stage
     if (filters.from) q.from = filters.from
     if (filters.to) q.to = filters.to
     if (filters.sent) q.sent = filters.sent
     if (filters.signed) q.signed = filters.signed
+    if (filters.status) q.status = filters.status
     return q
   }
 
@@ -88,9 +96,11 @@ export function useDashboard() {
   function resetFilters() {
     filters.q = ''
     filters.project = ''
+    filters.legalEntity = ''
     filters.stage = ''
     filters.sent = ''
     filters.signed = ''
+    filters.status = ''
     filters.from = options.value.dateRange.from
     filters.to = options.value.dateRange.to
   }
@@ -136,13 +146,13 @@ export function useDashboard() {
     }
   )
   watch(
-    () => [filters.project, filters.stage, filters.from, filters.to, filters.sent, filters.signed],
+    () => [filters.project, filters.legalEntity, filters.stage, filters.from, filters.to, filters.sent, filters.signed, filters.status],
     refresh
   )
 
   const hasActiveFilters = computed(
     () =>
-      !!(filters.q || filters.project || filters.stage || filters.sent || filters.signed) ||
+      !!(filters.q || filters.project || filters.legalEntity || filters.stage || filters.sent || filters.signed || filters.status) ||
       filters.from !== options.value.dateRange.from ||
       filters.to !== options.value.dateRange.to
   )
